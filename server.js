@@ -5,13 +5,11 @@ const crypto = require('crypto');
 const app = express();
 app.use(express.json());
 
-// Configuration - READY TO USE
 const PORT = 3000;
 const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
 const SELLAUTH_HMAC_SECRET = process.env.SELLAUTH_HMAC_SECRET;
 const JUNKIE_WEBHOOK_URL = process.env.JUNKIE_WEBHOOK_URL;
 
-// Verify Sellauth HMAC signature using X-Signature header
 function verifyHMAC(payload, signature, secret) {
     const hmac = crypto.createHmac('sha256', secret);
     hmac.update(JSON.stringify(payload));
@@ -22,7 +20,6 @@ function verifyHMAC(payload, signature, secret) {
     );
 }
 
-// Send notification to Discord
 async function sendToDiscord(orderData) {
     try {
         const embed = {
@@ -75,7 +72,6 @@ async function sendToDiscord(orderData) {
     }
 }
 
-// Forward to Junkie webhook
 async function forwardToJunkie(orderData) {
     try {
         const response = await axios.post(JUNKIE_WEBHOOK_URL, orderData);
@@ -87,7 +83,6 @@ async function forwardToJunkie(orderData) {
     }
 }
 
-// Main webhook endpoint that receives from Sellauth
 app.post('/webhook/sellauth', async (req, res) => {
     try {
         console.log('📨 Received webhook from Sellauth');
@@ -95,7 +90,6 @@ app.post('/webhook/sellauth', async (req, res) => {
         const payload = req.body;
         const signature = req.headers['x-signature'];
 
-        // Verify HMAC signature for security
         if (signature) {
             const isValid = verifyHMAC(payload, signature, SELLAUTH_HMAC_SECRET);
             if (!isValid) {
@@ -107,14 +101,11 @@ app.post('/webhook/sellauth', async (req, res) => {
             console.warn('⚠️ No signature found in request');
         }
 
-        // Check if this is a purchase event (order.created or order.paid)
         if (payload.event === 'order.created' || payload.event === 'order.paid') {
             console.log(`💳 Purchase event detected: ${payload.event}`);
 
-            // Forward to Junkie to generate key
             await forwardToJunkie(payload);
 
-            // Send notification to Discord
             await sendToDiscord(payload);
 
             res.status(200).json({ 
@@ -138,15 +129,14 @@ app.post('/webhook/sellauth', async (req, res) => {
     }
 });
 
-// Health check endpoint
 app.get('/health', (req, res) => {
     res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// Start server
 app.listen(PORT, () => {
     console.log(`🚀 Webhook server running on port ${PORT}`);
     console.log(`📍 Webhook URL: http://localhost:${PORT}/webhook/sellauth`);
     console.log('⏳ Waiting for webhooks from Sellauth...');
 });
+
 
