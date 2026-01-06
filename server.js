@@ -73,6 +73,25 @@ async function sendToDiscord(orderData) {
     }
 }
 
+async function sendStartupNotification() {
+    try {
+        console.log('🔄 Attempting to send startup notification...');
+        
+        const message = {
+            content: '🟢 Webhook Server Online ✅'
+        };
+
+        const response = await axios.post(DISCORD_WEBHOOK_URL, message);
+        console.log('✅ Sent startup notification to Discord');
+        console.log('Response status:', response.status);
+    } catch (error) {
+        console.error('❌ Error sending startup notification:', error.message);
+        if (error.response) {
+            console.error('Error response:', error.response.data);
+        }
+    }
+}
+
 async function forwardToJunkie(orderData) {
     try {
         const response = await axios.post(JUNKIE_WEBHOOK_URL, orderData);
@@ -134,8 +153,11 @@ app.get('/health', (req, res) => {
     res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
     console.log(`🚀 Webhook server running on port ${PORT}`);
     console.log(`📍 Webhook URL: /webhook/sellauth`);
     console.log('⏳ Waiting for webhooks from Sellauth...');
+    
+    // Send Discord notification that server is online
+    await sendStartupNotification();
 });
