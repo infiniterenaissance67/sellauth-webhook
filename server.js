@@ -7,9 +7,9 @@ app.use(express.json());
 
 // Configuration - READY TO USE
 const PORT = 3000;
-const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1457999676056932455/osQMujQQ3Fe7qfFXHiENgTjcxZzd2xzZDD3hqA-aXqtT3BTNFq-jKCvcxYgPiaGgxUi3';
-const SELLAUTH_HMAC_SECRET = '039758fc38405914cc4c11e9b400aa5bd6f137072adad232f0a6aa46046e6c6c';
-const JUNKIE_WEBHOOK_URL = 'https://api.junkie-development.de/api/v1/webhooks/execute/3ff650a5-a2a1-4bc7-98bb-03edcac017a0';
+const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
+const SELLAUTH_HMAC_SECRET = process.env.SELLAUTH_HMAC_SECRET;
+const JUNKIE_WEBHOOK_URL = process.env.JUNKIE_WEBHOOK_URL;
 
 // Verify Sellauth HMAC signature using X-Signature header
 function verifyHMAC(payload, signature, secret) {
@@ -149,3 +149,4 @@ app.listen(PORT, () => {
     console.log(`📍 Webhook URL: http://localhost:${PORT}/webhook/sellauth`);
     console.log('⏳ Waiting for webhooks from Sellauth...');
 });
+
