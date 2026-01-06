@@ -94,11 +94,32 @@ async function sendStartupNotification() {
 
 async function forwardToJunkie(orderData) {
     try {
-        const response = await axios.post(JUNKIE_WEBHOOK_URL, orderData);
+        // Junkie expects form data (URL-encoded), not JSON
+        const params = new URLSearchParams();
+        params.append('payer_email', orderData.customer_email || orderData.email || '');
+        params.append('item_name', orderData.product_name || orderData.product?.name || '');
+        params.append('txn_id', orderData.order_id || orderData.id || '');
+        params.append('gross', orderData.total || orderData.amount || '0.00');
+        params.append('first_name', orderData.first_name || '');
+        params.append('last_name', orderData.last_name || '');
+        params.append('item_number', orderData.product_id || orderData.variant_id || '');
+        params.append('quantity', orderData.quantity || '1');
+        
+        console.log('📤 Sending to Junkie (form data):', params.toString());
+        
+        const response = await axios.post(JUNKIE_WEBHOOK_URL, params, {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        });
+        
         console.log('✅ Forwarded to Junkie for key generation');
         return response.data;
     } catch (error) {
         console.error('❌ Error forwarding to Junkie:', error.message);
+        if (error.response) {
+            console.error('Junkie error response:', error.response.data);
+        }
         throw error;
     }
 }
