@@ -86,7 +86,7 @@ async function forwardToJunkie(orderData) {
 app.post('/webhook/sellauth', async (req, res) => {
     try {
         console.log('📨 Received webhook from Sellauth');
-        
+       
         const payload = req.body;
         const signature = req.headers['x-signature'];
 
@@ -108,23 +108,23 @@ app.post('/webhook/sellauth', async (req, res) => {
 
             await sendToDiscord(payload);
 
-            res.status(200).json({ 
-                success: true, 
-                message: 'Webhook processed successfully' 
+            res.status(200).json({
+                success: true,
+                message: 'Webhook processed successfully'
             });
         } else {
             console.log(`ℹ️ Ignoring event type: ${payload.event}`);
-            res.status(200).json({ 
-                success: true, 
-                message: 'Event ignored' 
+            res.status(200).json({
+                success: true,
+                message: 'Event ignored'
             });
         }
 
     } catch (error) {
         console.error('❌ Error processing webhook:', error.message);
-        res.status(500).json({ 
+        res.status(500).json({
             error: 'Internal server error',
-            message: error.message 
+            message: error.message
         });
     }
 });
@@ -138,6 +138,3 @@ app.listen(PORT, () => {
     console.log(`📍 Webhook URL: http://localhost:${PORT}/webhook/sellauth`);
     console.log('⏳ Waiting for webhooks from Sellauth...');
 });
-
-
-
