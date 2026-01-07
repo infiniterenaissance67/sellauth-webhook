@@ -95,30 +95,20 @@ async function sendStartupNotification() {
 
 async function forwardToJunkie(orderData) {
     try {
-        // Junkie expects form data (URL-encoded), not JSON
-        const params = new URLSearchParams();
-        params.append('payer_email', orderData.customer_email || orderData.email || '');
-        params.append('item_name', orderData.product_name || orderData.product?.name || '');
-        params.append('txn_id', orderData.order_id || orderData.id || '');
-        params.append('gross', orderData.total || orderData.amount || '0.00');
-        params.append('first_name', orderData.first_name || '');
-        params.append('last_name', orderData.last_name || '');
-        params.append('item_number', orderData.product_id || orderData.variant_id || '');
-        params.append('quantity', orderData.quantity || '1');
-        
-        const payload = params.toString();
+        // Junkie might expect the raw JSON payload from Sellauth
+        const payload = JSON.stringify(orderData);
         
         // Generate HMAC signature for Junkie
         const hmac = crypto.createHmac('sha256', JUNKIE_HMAC_SECRET);
         hmac.update(payload);
         const signature = hmac.digest('hex');
         
-        console.log('📤 Sending to Junkie (form data):', payload);
+        console.log('📤 Sending to Junkie (JSON)');
         console.log('🔐 Signature:', signature);
         
-        const response = await axios.post(JUNKIE_WEBHOOK_URL, payload, {
+        const response = await axios.post(JUNKIE_WEBHOOK_URL, orderData, {
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Type': 'application/json',
                 'X-Signature': signature
             }
         });
@@ -129,6 +119,7 @@ async function forwardToJunkie(orderData) {
         console.error('❌ Error forwarding to Junkie:', error.message);
         if (error.response) {
             console.error('Junkie error response:', error.response.data);
+            console.error('Junkie error status:', error.response.status);
         }
         throw error;
     }
