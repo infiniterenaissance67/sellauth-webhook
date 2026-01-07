@@ -10,6 +10,7 @@ const PORT = process.env.PORT || 3000;
 const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1457999676056932455/osQMujQQ3Fe7qfFXHiENgTjcxZzd2xzZDD3hqA-aXqtT3BTNFq-jKCvcxYgPiaGgxUi3';
 const SELLAUTH_HMAC_SECRET = '039758fc38405914cc4c11e9b400aa5bd6f137072adad232f0a6aa46046e6c6c';
 const JUNKIE_WEBHOOK_URL = 'https://api.junkie-development.de/api/v1/webhooks/execute/3ff650a5-a2a1-4bc7-98bb-03edcac017a0';
+const JUNKIE_HMAC_SECRET = '6e1d1afa-1eaa-4515-833d-4c78f79a371f';
 
 function verifyHMAC(payload, signature, secret) {
     const hmac = crypto.createHmac('sha256', secret);
@@ -105,11 +106,20 @@ async function forwardToJunkie(orderData) {
         params.append('item_number', orderData.product_id || orderData.variant_id || '');
         params.append('quantity', orderData.quantity || '1');
         
-        console.log('📤 Sending to Junkie (form data):', params.toString());
+        const payload = params.toString();
         
-        const response = await axios.post(JUNKIE_WEBHOOK_URL, params, {
+        // Generate HMAC signature for Junkie
+        const hmac = crypto.createHmac('sha256', JUNKIE_HMAC_SECRET);
+        hmac.update(payload);
+        const signature = hmac.digest('hex');
+        
+        console.log('📤 Sending to Junkie (form data):', payload);
+        console.log('🔐 Signature:', signature);
+        
+        const response = await axios.post(JUNKIE_WEBHOOK_URL, payload, {
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Signature': signature
             }
         });
         
